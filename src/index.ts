@@ -28,8 +28,13 @@ app.get("/api/health", (c) =>
 
 // Projects
 app.get("/api/projects", async (c) => {
-  const data = await dokploy("project.all", {});
-  return c.json(data);
+  try {
+    const data = await dokploy("project.all", {});
+    return c.json(data);
+  } catch (e: any) {
+    console.error("project.all error:", e.message);
+    return c.json({ error: e.message }, 500);
+  }
 });
 
 // Applications - list all (we get them from projects)

@@ -6,8 +6,8 @@ export async function dokploy(procedure: string, input: Record<string, any>): Pr
   if (!DOKPLOY_TOKEN) throw new Error("DOKPLOY_TOKEN not configured");
 
   // Dokploy uses tRPC - queries use GET with input as JSON in query param
-  const inputStr = JSON.stringify(input);
-  const url = `${DOKPLOY_URL}/api/trpc/${procedure}?input=${encodeURIComponent(inputStr)}`;
+  // tRPC v10 GET expects input as JSON string in query param
+  const url = `${DOKPLOY_URL}/api/trpc/${procedure}?input=${encodeURIComponent(JSON.stringify(input))}`;
 
   const res = await fetch(url, {
     method: "GET",

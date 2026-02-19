@@ -65,7 +65,8 @@ async function loadProjects() {
   el.innerHTML = '<p class="loading">Loading...</p>';
   try {
     const projects = await api('/api/projects');
-    if (!projects.length) { el.innerHTML = '<p>No projects found</p>'; return; }
+    if (projects.error) { el.innerHTML = '<p class="error">API Error: ' + esc(projects.error) + '</p>'; return; }
+    if (!Array.isArray(projects) || !projects.length) { el.innerHTML = '<p>No projects found</p>'; return; }
     el.innerHTML = projects.map(p => {
       const apps = [];
       (p.environments || []).forEach(env => {
