@@ -1,0 +1,30 @@
+const DOKPLOY_URL = process.env.DOKPLOY_URL || "";
+const DOKPLOY_TOKEN = process.env.DOKPLOY_TOKEN || "";
+
+export async function dokploy(procedure: string, input: Record<string, any>): Promise<any> {
+  if (!DOKPLOY_URL) throw new Error("DOKPLOY_URL not configured");
+  if (!DOKPLOY_TOKEN) throw new Error("DOKPLOY_TOKEN not configured");
+
+  // Dokploy uses tRPC - queries use GET with input as JSON in query param
+  const inputStr = JSON.stringify(input);
+  const url = `${DOKPLOY_URL}/api/trpc/${procedure}?input=${encodeURIComponent(inputStr)}`;
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: "", // tRPC auth might use cookies
+      Authorization: `Bearer ${DOKPLOY_TOKEN}`,
+      "x-api-key": DOKPLOY_TOKEN,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Dokploy API error ${res.status}: ${text}`);
+  }
+
+  const json = await res.json();
+  // tRPC wraps results in { result: { data: ... } }
+  return json?.result?.data ?? json;
+}
