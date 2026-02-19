@@ -72,24 +72,21 @@ app.get("/api/applications/:id/deployments", async (c) => {
   return c.json(data);
 });
 
-// Logs
+// Logs (get deployment logs from most recent deployment)
 app.get("/api/applications/:id/logs", async (c) => {
   const id = c.req.param("id");
   try {
-    const data = await dokploy("application.readAppMonitoring", {
-      applicationId: id,
-    });
-    return c.json(data);
-  } catch {
-    // Fallback: try docker logs approach
-    try {
-      const data = await dokploy("docker.getContainersByAppLabel", {
-        applicationId: id,
-      });
-      return c.json(data);
-    } catch (e: any) {
-      return c.json({ error: "Could not fetch logs", detail: e.message }, 500);
+    // Get deployments, then fetch the log from the latest one
+    const deployments = await dokploy("deployment.all", { applicationId: id });
+    const list = Array.isArray(deployments) ? deployments : [];
+    if (!list.length) return c.json({ logs: "No deployments found" });
+    const latest = list[0];
+    if (latest.logPath) {
+      return c.json({ deploymentId: latest.deploymentId, status: latest.status, logPath: latest.logPath, createdAt: latest.createdAt });
     }
+    return c.json({ deploymentId: latest.deploymentId, status: latest.status, description: latest.description || latest.title || "No log content available" });
+  } catch (e: any) {
+    return c.json({ error: "Could not fetch logs", detail: e.message }, 500);
   }
 });
 
