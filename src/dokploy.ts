@@ -25,6 +25,7 @@ export async function dokploy(procedure: string, input: Record<string, any>): Pr
   }
 
   const json = await res.json();
+  console.log(`[dokploy] ${procedure} raw response keys:`, Object.keys(json), 'result keys:', json?.result ? Object.keys(json.result) : 'n/a');
   // tRPC wraps results in { result: { data: ... } }
   return json?.result?.data ?? json;
 }
