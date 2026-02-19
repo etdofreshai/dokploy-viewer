@@ -7,7 +7,9 @@ export async function dokploy(procedure: string, input: Record<string, any>): Pr
 
   // Dokploy uses tRPC - queries use GET with input as JSON in query param
   // tRPC v10 GET expects input as JSON string in query param
-  const url = `${DOKPLOY_URL}/api/trpc/${procedure}?input=${encodeURIComponent(JSON.stringify(input))}`;
+  // superjson: wrap input in { json: ... }
+  const wrapped = Object.keys(input).length > 0 ? { json: input } : input;
+  const url = `${DOKPLOY_URL}/api/trpc/${procedure}?input=${encodeURIComponent(JSON.stringify(wrapped))}`;
 
   const res = await fetch(url, {
     method: "GET",
