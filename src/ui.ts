@@ -145,8 +145,11 @@ async function loadLogs(id) {
   const el = document.getElementById('tab-logs');
   if (!el) return;
   try {
-    const logs = await api('/api/applications/' + id + '/logs');
-    el.innerHTML = '<pre>' + esc(typeof logs === 'string' ? logs : JSON.stringify(logs, null, 2)) + '</pre>';
+    const data = await api('/api/applications/' + id + '/logs');
+    const meta = '<div style="margin-bottom:0.5rem;font-size:0.85rem;color:#94a3b8;">' +
+      'Deployment: ' + esc(data.deploymentId || '') + ' | Status: ' + esc(data.status || '') + ' | ' + esc(data.createdAt || '') +
+      '</div>';
+    el.innerHTML = meta + '<pre>' + esc(data.logs || data.error || 'No logs') + '</pre>';
   } catch(e) { el.innerHTML = '<p class="error">' + esc(e.message) + '</p>'; }
 }
 

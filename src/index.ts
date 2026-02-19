@@ -72,19 +72,34 @@ app.get("/api/applications/:id/deployments", async (c) => {
   return c.json(data);
 });
 
-// Logs (get deployment logs from most recent deployment)
+// Logs — fetch build log content from Dokploy's logPath
 app.get("/api/applications/:id/logs", async (c) => {
   const id = c.req.param("id");
   try {
-    // Get deployments, then fetch the log from the latest one
     const deployments = await dokploy("deployment.all", { applicationId: id });
     const list = Array.isArray(deployments) ? deployments : [];
     if (!list.length) return c.json({ logs: "No deployments found" });
     const latest = list[0];
+
+    // Try to read the log file content via Dokploy's settings.readDirectory or direct fetch
+    let logContent = "";
     if (latest.logPath) {
-      return c.json({ deploymentId: latest.deploymentId, status: latest.status, logPath: latest.logPath, createdAt: latest.createdAt });
+      try {
+        // Read log file directly (works when running on same host)
+        const fs = await import("node:fs/promises");
+        logContent = await fs.readFile(latest.logPath, "utf-8");
+      } catch {
+        logContent = `(Could not read log file: ${latest.logPath})`;
+      }
     }
-    return c.json({ deploymentId: latest.deploymentId, status: latest.status, description: latest.description || latest.title || "No log content available" });
+
+    return c.json({
+      deploymentId: latest.deploymentId,
+      status: latest.status,
+      createdAt: latest.createdAt,
+      logPath: latest.logPath || null,
+      logs: logContent || "No log content available",
+    });
   } catch (e: any) {
     return c.json({ error: "Could not fetch logs", detail: e.message }, 500);
   }
